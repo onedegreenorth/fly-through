@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title></title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.7/esri/css/main.css">
+  <script src="https://js.arcgis.com/4.7/"></script>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+
+  <script>
+    require([
+      "esri/views/SceneView",
+      "esri/WebScene",
+      "esri/geometry/Point",
+      "esri/Camera",
+      "dojo/dom",
+      "dojo/domReady!"
+    ], function(
+      SceneView, WebScene, Point, Camera, dom
+    ) {
+
+      defaults = {
+        timeDelay: 5000,
+        tilt: 80,
+        heading: 22.452496945982112
+      }
+      
+      var scene = new WebScene({
+        portalItem: { // autocasts as new PortalItem()
+          id: "89dd46624fb5429db650973d13a8d0d1"
+        }
+      });
+
+      var view = new SceneView({
+        map: scene,
+        container: "viewDiv"
+      });
+      
+
+      view.when(() => {
+
+        i = 0;
+
+        loop = setInterval(() => {
+
+          if (i > points.length){
+            clearInterval(loop)
+          }
+
+          p = points[i];
+          g = Point({x: p[0], y: p[1], z: 10, spatialReference: 102100});
+          
+          c = Camera({
+            position: g,
+            tilt: defaults.tilt,
+            heading: defaults.heading,
+          })
+
+          view.goTo(c, {
+            duration: defaults.timeDelay,
+            easing: "linear"
+          });
+
+          i += 1;
+
+        }, defaults.timeDelay)
+
+      })
+
+    });
+
+    var points = [
+      [19453911.02024184, -4418714.417306165],
+      [19453936.699642178, -4418646.870022917],
+      [19453951.366528045, -4418605.804962889],
+      [19453969.269369714, -4418555.369826257],
+      [19453988.726825997, -4418500.735290408],
+      [19454007.48353674, -4418447.767685779],
+      [19454024.81022243, -4418396.9709593],
+      [19454040.96717497, -4418353.154372785],
+      [19454073.693768486, -4418264.311720299],
+      [19454096.744619336, -4418200.578128273],
+      [19454115.74054443, -4418148.279556444],
+      [19454129.570847254, -4418109.6318547465],
+      [19454143.90901848, -4418069.778273927],
+      [19454176.506329395, -4417979.129147933],
+      [19454203.116711404, -4417905.428879119],
+      [19454236.404801868, -4417809.046751911]
+    ]
+  </script>
+
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+
+</html>
