@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title></title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.7/esri/css/main.css">
+  <script src="https://js.arcgis.com/4.7/"></script>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+    #controls {
+      background-color: #fff;
+      line-height: 2em;
+      padding: 10px;
+      width: 20em;
+    }
+    #current-slide,
+    .bold {
+      font-weight: 700
+    }
+    #layer-info {
+      transition: opacity 1s;
+    }
+  </style>
+
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+  <div id="controls" class="esri-widget">
+    <div id="slide-info">
+      Current slide:  <span id="current-slide">N/A</span> 
+    </div>
+    <div>
+      Playback:  
+      <span id="play" class="esri-icon esri-icon-play"></span>
+      <span id="pause" class="esri-icon esri-icon-pause"></span>
+    </div>
+    <div id="layer-info">
+      Layers loaded:  <span id="layers-loaded">x/x</span>
+    </div>
+  </div>
+
+  <script>
+    require([
+      "esri/views/SceneView",
+      "esri/WebScene",
+      "esri/geometry/Point",
+      "esri/Camera",
+      "esri/identity/IdentityManager"
+    ], function(
+      SceneView, WebScene, Point, Camera, id
+    ) {
+
+      var idKey = 'odn-fly-through'
+      loadIdManager()
+
+      var defaults = {
+        timeDelay: 2000,
+        tilt: 80, // unused
+        heading: 22.452496945982112 // unused
+      }
+      var controls = document.getElementById('controls')
+      var currentSlide = document.getElementById('current-slide')
+      var layersLoaded = document.getElementById('layers-loaded')
+      var layerInfo = document.getElementById('layer-info')
+
+      var controlPlay = document.getElementById('play')
+      var controlPause = document.getElementById('pause')
+      
+      var dotCount = 0
+      var dotMax = 10
+
+      var slideIndex = 0
+      
+      window.layerCount = 0
+      window.status = 'play'
+      
+      scene = new WebScene({
+        portalItem: { // autocasts as new PortalItem()
+          id: "296ea2b440284575ad67304c68b7ba75"
+        }
+      });
+      scene.when(function() {
+        // Get a count of all layers in the scene.
+        window.layerCount = scene.allLayers.toArray().length
+      })
+
+      window.view = new SceneView({
+        map: scene,
+        container: "viewDiv"
+      });
+
+      // Wait for all layer views to finish updating before cycling through slides.
+      window.layerViews = {}
+      window.timer = null
+
+      view.on('layerview-create', (e) => {
+        layerViews[e.layer.id] = e.layerView
+        var views = Object.values(layerViews)
+        console.log('views length and layer count', views.length, layerCount)
+        layersLoaded.innerHTML = views.length + '/' + layerCount + '   ' 
+        if ( views.length === window.layerCount ) {
+          layersLoaded.innerHTML += '<br>Getting data:  .'
+          dotCount += 1
+          clearInterval(window.timer)
+          window.timer = setInterval(() => {
+            var stillUpdating = views.some(a => a.updating)
+            if ( dotCount < dotMax ) {
+              layersLoaded.innerHTML += '.'
+              dotCount += 1
+            } else {
+              layersLoaded.innerHTML = layersLoaded.innerHTML.slice(0, -1)
+              dotCount -= 1
+            }
+            if ( !stillUpdating && !view.updating ) {
+              navigate(window.view, scene.presentation.slides)
+              clearInterval(window.timer)
+              layersLoaded.innerHTML = 'Finished loading'
+              setTimeout(function() {
+                layerInfo.style.opacity = 0
+                setTimeout(function() {
+                  layerInfo.style.display = 'none'
+                }, 1000)
+              }, 1000)
+              play.classList.add('bold')
+              play.addEventListener('click', function() {
+                pause.classList.remove('bold')
+                this.classList.add('bold')
+                window.status = 'play'
+                navigate(window.view, scene.presentation.slides)
+              })
+              pause.addEventListener('click', function() {
+                console.log('clicked pause')
+                play.classList.remove('bold')
+                this.classList.add('bold')
+                window.status = 'stop'
+              })
+            }
+          }, 200)
+        }
+      })
+
+      var navigate = function(view, slides) {
+        if ( window.status === 'stop' ) {
+          return
+        }
+        
+        currentSlide.innerHTML = (slideIndex + 1) + '/' + slides.length
+        var camera = slides.getItemAt(slideIndex).viewpoint.camera
+        // console.log('next camera', camera)
+        var advance = function() {
+          slideIndex += 1
+          if ( slideIndex === slides.length ) {
+            slideIndex = 0
+          }
+          navigate(window.view, slides)
+        }
+
+        view.goTo(camera, {
+          duration: defaults.timeDelay,
+          easing: 'linear'
+        }).then(advance)
+      }
+      
+      view.ui.add(controls, 'top-right');
+
+      function loadIdManager() {
+        var previousId = localStorage.getItem(idKey)
+        localStorage.getItem('odn-fly-through')
+        console.log('load id manager', previousId)
+        if ( previousId ) {
+          var idInfo = JSON.parse(previousId)
+          console.log('init id mgr', idInfo)
+          id.initialize(idInfo)
+        }
+      }
+
+      window.onunload = function() {
+        var idState = JSON.stringify(id.toJSON())
+        console.log('unload...', idState)
+        localStorage.setItem(idKey, idState)
+      }
+
+    });
+
+  </script>
+</body>
+
+</html>
