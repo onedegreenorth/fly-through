@@ -48,6 +48,10 @@
     <div id="layer-info">
       Layers loaded:  <span id="layers-loaded">x/x</span>
     </div>
+    <div id="slide-timing">
+      <input type="range" id="slide-duration" min="500" max="15000" step="100" />
+      <label for="slide-duration" id="duration-label">...</label>
+    </div>
   </div>
 
   <script>
@@ -76,6 +80,16 @@
 
       var controlPlay = document.getElementById('play')
       var controlPause = document.getElementById('pause')
+
+      var slider = document.getElementById('slide-duration')
+      slider.value = defaults.timeDelay
+      var label = document.getElementById('duration-label')
+      label.innerHTML = slider.value
+      slider.oninput = function(e) {
+        console.log('slider change', e)
+        label.innerHTML = e.target.value
+        defaults.timeDelay = +e.target.value
+      }
       
       var dotCount = 0
       var dotMax = 10
