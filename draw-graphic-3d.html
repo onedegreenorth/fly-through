@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title></title>
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.7/esri/css/main.css">
+  <script src="https://js.arcgis.com/4.7/"></script>
+
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/SceneView",
+      "esri/layers/GraphicsLayer",
+      "esri/Graphic",
+      "dojo/domReady!"
+    ], function(Map, SceneView, GraphicsLayer, Graphic) {
+
+      window.map = new Map({
+        basemap: "streets-vector",
+        ground: 'world-elevation'
+      });
+
+      window.view = new SceneView({
+        container: "viewDiv",
+        map: map,
+        zoom: 17,
+        center: [-73.984582, 40.756726]
+      });
+      view.on('click', draw)
+
+      var graphicsLayer = new GraphicsLayer({
+        elevationInfo: { 
+          mode: 'relative-to-ground',
+          offset: 10
+        }
+      });
+      map.add(graphicsLayer);
+      
+      var paths = []
+      var lineGraphic
+      var lineSymbol = {
+        type: "simple-line", // autocasts as SimpleLineSymbol()
+        color: [226, 119, 40],
+        width: 4
+      };
+
+      function draw(e) {
+        var pt = e.mapPoint
+        var z = pt.z
+        paths.push([pt.longitude, pt.latitude, pt.z])
+        if ( paths.length === 3 ) {
+          paths.shift()
+        }
+        if ( paths.length === 2 ) {
+          graphicsLayer.remove(lineGraphic)
+          var polyline = {
+            type: "polyline", // autocasts as new Polyline()
+            paths: paths
+          };
+          lineGraphic = new Graphic({
+            geometry: polyline,
+            symbol: lineSymbol
+          });
+          graphicsLayer.add(lineGraphic);
+        }
+
+        // Add a point graphic at the click point
+        var point = {
+          type: "point", // autocasts as new Point()
+          x: pt.longitude,
+          y: pt.latitude,
+          z: z
+        };
+        markerSymbol = {
+          type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
+          color: [226, 119, 40],
+          outline: { // autocasts as new SimpleLineSymbol()
+            color: [255, 255, 255],
+            width: 2
+          }
+        };
+        var pointGraphic = new Graphic({
+          geometry: point,
+          symbol: markerSymbol
+        });
+        graphicsLayer.add(pointGraphic);
+      }
+
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+</html>
