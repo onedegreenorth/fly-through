@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>CSVLayer - 4.7</title>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.7/esri/css/main.css">
+  <script src="https://js.arcgis.com/4.7/"></script>
+
+  <script>
+    require([
+      "esri/Map",
+      "esri/layers/CSVLayer",
+      "esri/views/SceneView"
+    ], function(
+      Map,
+      CSVLayer,
+      SceneView
+    ) {
+
+      // If CSV files are not on the same domain as your website, a CORS enabled server
+      // or a proxy is required.
+      var url = "data/anchors.csv";
+
+      var template = {
+        title: "UWB Anchors",
+        content: "Anchor:  {name}"
+      };
+
+      window.csvLayer = new CSVLayer({
+        url: url,
+        copyright: "Humatics",
+        popupTemplate: template,
+        elevationInfo: {
+          // drapes icons on the surface of the globe
+          // mode: "on-the-ground"
+          // mode: "absolute-height",
+          mode: "relative-to-scene"
+          // featureExpressionInfo: {
+          //   expression: '$feature.altitude * 100'
+          // },
+          // offset: 15,
+          // unit: 'meters'
+        },
+        labelingInfo: [{
+          // When using callouts on labels, "above-center" is the only allowed position
+          labelPlacement: "above-center",
+          labelExpressionInfo: {
+            value: "{name}"
+          },
+          symbol: {
+            type: "label-3d", // autocasts as new LabelSymbol3D()
+            symbolLayers: [{
+              type: "text", // autocasts as new TextSymbol3DLayer()
+              material: {
+                color: "black"
+              },
+              halo: {
+                color: [255, 255, 255, 0.7],
+                size: 2
+              },
+              size: 10
+            }],
+            // Labels need a small vertical offset that will be used by the callout
+            verticalOffset: {
+              screenLength: 150,
+              maxWorldLength: 2000,
+              minWorldLength: 30
+            },
+            // The callout has to have a defined type (currently only line is possible)
+            // The size, the color and the border color can be customized
+            callout: {
+              type: "line", // autocasts as new LineCallout3D()
+              size: 0.5,
+              color: [0, 0, 0],
+              border: {
+                color: [255, 255, 255, 0.7]
+              }
+            }
+          }
+        }],
+        labelsVisible: true
+      });
+
+      csvLayer.renderer = {
+        type: "simple", // autocasts as new SimpleRenderer()
+        symbol: {
+          type: "point-3d",  // autocasts as new PointSymbol3D()
+          symbolLayers: [
+            {
+              type: "icon",  // autocasts as new IconSymbol3DLayer()
+              // add properties for the IconSymbol3DLayer here
+            }
+          ],
+
+          verticalOffset: {
+            screenLength: 15,
+            maxWorldLength: 200,
+            minWorldLength: 15
+          },
+
+          callout: {
+            type: "line", // autocasts as new LineCallout3D()
+            color: "white",
+            size: 2,
+            border: {
+              color: [255, 255, 255]
+            }
+          }
+        }
+      };
+
+      var map = new Map({
+        basemap: "gray-vector",
+        layers: [csvLayer]
+      });
+
+      window.view = new SceneView({
+        container: "viewDiv",
+        // center: [-73.98147, 40.75902],
+        // zoom: 18.7,
+        
+        // camera: {
+        //   position: [ -73.98044, 40.75753, 50 ],
+        //   heading: 0,
+        //   tilt: 75
+        // },
+
+        camera: {
+          position: [ -73.98203, 40.75779, 20 ],
+          heading: 32.45,
+          tilt: 84.898
+        },
+        qualityProfile: 'low',
+        map: map
+      });
+
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+
+</html>
