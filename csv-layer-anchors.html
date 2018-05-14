@@ -33,7 +33,7 @@
 
       // If CSV files are not on the same domain as your website, a CORS enabled server
       // or a proxy is required.
-      var url = "data/uwb_gps_synced_int_time.csv";
+      var url = "data/anchors.csv";
 
       // Paste the url into a browser's address bar to download and view the attributes
       // in the CSV file. These attributes include:
@@ -43,31 +43,24 @@
       // * time - the time of the event
 
       var template = {
-        title: "UWB Data",
-        content: function(e) {
-          // console.log('template content', e.graphic)
-          var anchors = Object.keys(e.graphic.attributes).filter(function(name) {
-            return name.startsWith('anchor')
-          }).map(function(attribute) {
-            return e.graphic.attributes[attribute]
-          }).filter(function(val) { 
-            return val 
-          }).join(', ')
-          console.log('anchors', anchors)
-          return 'Anchors:  ' + anchors
-        }
+        title: "UWB Anchors",
+        content: "Anchor:  {name}"
       };
 
-      var csvLayer = new CSVLayer({
+      window.csvLayer = new CSVLayer({
         url: url,
-        latitudeField: 'uwb_latitude',
-        longitudeField: 'uwb_longitude',
         copyright: "Humatics",
         popupTemplate: template,
         elevationInfo: {
           // drapes icons on the surface of the globe
-          mode: "on-the-ground"
-        }
+          // mode: "on-the-ground"
+          mode: "absolute-height",
+          featureExpressionInfo: {
+            expression: '$feature.altitude * 100'
+          },
+          offset: 15,
+          unit: 'meters'
+        },
       });
 
       csvLayer.renderer = {
@@ -93,10 +86,22 @@
         layers: [csvLayer]
       });
 
-      var view = new SceneView({
+      window.view = new SceneView({
         container: "viewDiv",
-        center: [-73.984582, 40.756726],
-        zoom: 14,
+        // center: [-73.98147, 40.75902],
+        // zoom: 18.7,
+        
+        // camera: {
+        //   position: [ -73.98044, 40.75753, 50 ],
+        //   heading: 0,
+        //   tilt: 75
+        // },
+
+        camera: {
+          position: [ -73.98203, 40.75779, 20 ],
+          heading: 32.45,
+          tilt: 84.898
+        },
         map: map
       });
 

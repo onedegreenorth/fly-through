@@ -1,13 +1,15 @@
 require([
   "esri/Map",
   "esri/layers/FeatureLayer",
-  "esri/views/SceneView",
+  "esri/layers/CSVLayer",
+  "esri/views/MapView",
   "esri/widgets/Fullscreen",
   "esri/identity/IdentityManager"
 ], function(
   Map,
   FeatureLayer,
-  SceneView,
+  CSVLayer,
+  MapView,
   Fullscreen,
   id
 ) {
@@ -28,12 +30,13 @@ require([
   //     "outStatisticFieldName": "time_max"
   //   }  
   // ]
-  var uwb_start = 1475258057390
-  var uwb_end = 1475258187220
-  var uwb_range = Math.ceil((uwb_end - uwb_start) / 1000)
-  console.log('start/end', uwb_start, uwb_end)
+  // var uwb_start = 1475258057390
+  // var uwb_end = 1475258187220
+  // var uwb_range = Math.ceil((uwb_end - uwb_start) / 1000)
+  var uwb_range = 130
+  // console.log('start/end', uwb_start, uwb_end)
 
-  var startLat = 40.75822
+  // var startLat = 40.75822
 
   //--------------------------------------------------------------------------
   //
@@ -41,13 +44,43 @@ require([
   //
   //--------------------------------------------------------------------------
 
-  layer = new FeatureLayer({
-    portalItem: {
-      id: "6f35bc7e9aab4d5a9f5402125d85cece"
-    },
-    // definitionExpression: "uwb_timestamp > 0",
-    title: "Ultra Wide Band data",
-    minScale: 72223.819286
+  // layer = new FeatureLayer({
+  //   portalItem: {
+  //     id: "6f35bc7e9aab4d5a9f5402125d85cece"
+  //   },
+  //   // definitionExpression: "uwb_timestamp > 0",
+  //   title: "Ultra Wide Band data",
+  //   minScale: 72223.819286
+  // });
+
+  // var url = "../data/uwb_gps_synced_int_time.csv";
+  var url = "../data/uwb_gps_synced_int_time_subset.csv";
+  var template = {
+    title: "UWB Data",
+    content: function(e) {
+      // console.log('template content', e.graphic)
+      var anchors = Object.keys(e.graphic.attributes).filter(function(name) {
+        return name.startsWith('anchor')
+      }).map(function(attribute) {
+        return e.graphic.attributes[attribute]
+      }).filter(function(val) { 
+        return val 
+      }).join(', ')
+      console.log('anchors', anchors)
+      return 'Time:  ' + e.graphic.attributes.when + '<br>Anchors:  ' + anchors
+    }
+  };
+
+  var layer = new CSVLayer({
+    url: url,
+    latitudeField: 'uwb_latitude',
+    longitudeField: 'uwb_longitude',
+    copyright: "Humatics",
+    popupTemplate: template,
+    elevationInfo: {
+      // drapes icons on the surface of the globe
+      mode: "on-the-ground"
+    }
   });
 
   var map = new Map({
@@ -59,7 +92,7 @@ require([
     layers: [layer]
   });
 
-  window.view = new SceneView({
+  window.view = new MapView({
     map: map,
     container: "viewDiv",
     center: [-73.98029, 40.75822],
@@ -110,10 +143,10 @@ require([
 
   view.ui.empty("top-left");
   view.ui.add(titleDiv, "top-left");
-  // view.ui.add(new Fullscreen({
-  //   view: view,
-  //   element: applicationDiv
-  // }), "top-right");
+  view.ui.add(new Fullscreen({
+    view: view,
+    element: applicationDiv
+  }), "top-right");
 
   // When the layerview is available, setup hovering interactivity
   // view.whenLayerView(layer).then(setupHoverTooltip);
@@ -144,28 +177,15 @@ require([
     * 20-year time frame are assigned a color interpolated between blue and pink.
     */
   function createRenderer(position) {
-    console.log('position', position)
     // position = (position * 1000) + uwb_start + 1
-    // var oneSecondBefore = position - 1000
-    // var oneSecondAfter = position + 1000
+    position = (position * 1000)
+    var oneSecondBefore = (position - 1000 > 0) ? position - 1000 : 0
+    var oneSecondAfter = position + 1000
+    console.log('position', position, oneSecondBefore, oneSecondAfter)
     // console.log('createRenderer position', position, oneSecondBefore, oneSecondAfter)
-    position = (position / 100000) + startLat
-    // var opacityStops = [{
-    //   opacity: 0,
-    //   value: oneSecondBefore
-    // },
-    // {
-    //   opacity: 1,
-    //   value: position
-    // },
-    // {
-    //   opacity: 0,
-    //   value: oneSecondAfter
-    // }
-    // ];
     var opacityStops = [{
       opacity: 0,
-      value: position - 0.0001
+      value: oneSecondBefore
     },
     {
       opacity: 1,
@@ -173,22 +193,35 @@ require([
     },
     {
       opacity: 0,
-      value: position + 0.0001
+      value: oneSecondAfter
     }
-    ]
+    ];
+    // var opacityStops = [{
+    //   opacity: 0,
+    //   value: position - 0.0001
+    // },
+    // {
+    //   opacity: 1,
+    //   value: position
+    // },
+    // {
+    //   opacity: 0,
+    //   value: position + 0.0001
+    // }
+    // ]
 
     return {
       type: "simple",
       symbol: {
         type: "simple-marker",
-        size: 16,
+        size: 6,
         color: "rgb(0, 0, 0)",
         outline: { width: 0.5, color: "white" }
       },
       visualVariables: [{
         type: "opacity",
-        // field: "uwb_timestamp",
-        field: "uwb_latitude",
+        field: "when",
+        // field: "uwb_latitude",
         stops: opacityStops
       // }, {
         // type: "color",
@@ -205,6 +238,51 @@ require([
         // }]
       }]
     };
+  }
+
+  /**
+    * Sets up a moving tooltip that displays
+    * the construction year of the hovered building.
+    */
+  function setupHoverTooltip(layerview) {
+    var promise;
+    var highlight;
+
+    var tooltip = createTooltip();
+
+    view.on("pointer-move", function(event) {
+      if (promise) {
+        promise.cancel();
+      }
+
+      promise = view.hitTest(event.x, event.y)
+        .then(function(hit) {
+          promise = null;
+
+          // remove current highlighted feature
+          if (highlight) {
+            highlight.remove();
+            highlight = null;
+          }
+
+          var results = hit.results.filter(function(result) {
+            return result.graphic.layer === layer;
+          });
+
+          // highlight the hovered feature
+          // or hide the tooltip
+          if (results.length) {
+            var graphic = results[0].graphic;
+            var screenPoint = hit.screenPoint;
+
+            highlight = layerview.highlight(graphic);
+            tooltip.show(screenPoint, "Time is " + graphic.getAttribute(
+              "uwb_timestamp"));
+          } else {
+            tooltip.hide();
+          }
+        });
+    });
   }
 
   /**
@@ -252,7 +330,7 @@ require([
       // Update at 30fps
       setTimeout(function() {
         requestAnimationFrame(frame);
-      }, 1000 / 10);
+      }, 1000 / 30);
     };
 
     frame();
@@ -260,6 +338,67 @@ require([
     return {
       remove: function() {
         animating = false;
+      }
+    };
+  }
+
+  /**
+    * Creates a tooltip to display a the construction year of a building.
+    */
+  function createTooltip() {
+    var tooltip = document.createElement("div");
+    var style = tooltip.style;
+
+    tooltip.setAttribute("role", "tooltip");
+    tooltip.classList.add("tooltip");
+
+    var textElement = document.createElement("div");
+    textElement.classList.add("esri-widget");
+    tooltip.appendChild(textElement);
+
+    view.container.appendChild(tooltip);
+
+    var x = 0;
+    var y = 0;
+    var targetX = 0;
+    var targetY = 0;
+    var visible = false;
+
+    // move the tooltip progressively
+    function move() {
+      x += (targetX - x) * 0.1;
+      y += (targetY - y) * 0.1;
+
+      if (Math.abs(targetX - x) < 1 && Math.abs(targetY - y) < 1) {
+        x = targetX;
+        y = targetY;
+      } else {
+        requestAnimationFrame(move);
+      }
+
+      style.transform = "translate3d(" + Math.round(x) + "px," + Math.round(
+        y) + "px, 0)";
+    }
+
+    return {
+      show: function(point, text) {
+        if (!visible) {
+          x = point.x;
+          y = point.y;
+        }
+
+        targetX = point.x;
+        targetY = point.y;
+        style.opacity = 1;
+        visible = true;
+        textElement.innerHTML = text;
+
+        move();
+      },
+
+      hide: function() {
+        style.opacity = 0;
+        visible = false;
       }
     };
   }
