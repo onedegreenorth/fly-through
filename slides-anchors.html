@@ -57,7 +57,7 @@
     var dojoConfig = {
       cacheBust: true,
       paths: { 
-        humatics: '/humatics'
+        humatics: location.pathname.replace(/\/[^/]+$/, '') + '/humatics'
       }
     };
   </script>
