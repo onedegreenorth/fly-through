@@ -39,12 +39,22 @@ define([
       });
       graphicsLayer.add(pointGraphic);
     },
-    moveTo: function(extent) {
+    moveTo: function(extent, slide) {
       // console.log('moveTo::graphicsLayer', graphicsLayer)
       // console.log('moveTo::extent', extent)
       graphicsLayer.removeAll()
       if ( lineGeom ) {
-        var nearest = geometryEngine.nearestVertex(lineGeom, extent.center)
+        var nearest
+        if ( slide === 3 ) {
+          // Use southeast corner to pick up the first part of th track
+          nearest = geometryEngine.nearestVertex(lineGeom, {
+            type: 'point',
+            x: extent.center.x,
+            y: extent.ymin
+          })
+        } else {
+          nearest = geometryEngine.nearestVertex(lineGeom, extent.center)
+        }
         // console.log('nearest', nearest)
         var nextGeom = {
           type: 'point',
@@ -60,6 +70,12 @@ define([
     },
     setLineGeom: function(geom) {
       lineGeom = geom
+    },
+    show: function() {
+      graphicsLayer.visible = true
+    },
+    hide: function() {
+      graphicsLayer.visible = false
     }
   }
 })

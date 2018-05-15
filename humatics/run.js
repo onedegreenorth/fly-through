@@ -97,7 +97,7 @@ require([
           dotCount -= 1
         }
         if ( !stillUpdating && !view.updating ) {
-          // anchors.addTo(scene)
+          anchors.addTo(scene)
           position.addTo(scene, {
             latitude: view.camera.latitude,
             longitude: view.camera.longitude
@@ -120,10 +120,12 @@ require([
             navigate(window.view, scene.presentation.slides)
           })
           pause.addEventListener('click', function() {
-            // console.log('clicked pause')
             play.classList.remove('bold')
             this.classList.add('bold')
             window.status = 'stop'
+            if ( window.extentWatch ) {
+              window.extentWatch.remove()
+            }
           })
         }
       }, 200)
@@ -138,12 +140,15 @@ require([
     currentSlide.innerHTML = (slideIndex + 1) + '/' + slides.length
 
     // Move the dot from slides 4 - 10.
-    if ( slideIndex + 1 === 4 ) {
-      window.extentWatch = view.watch('extent', function(newVal, oldVal, prop, target) {
-        position.moveTo(newVal)
+    if ( slideIndex + 1 === 3 ) {
+      position.show()
+      // window.extentWatch = view.watch('extent', function(newVal, oldVal, prop, target) {
+      window.extentWatch = view.watch('extent', function(newVal) {
+        position.moveTo(newVal, slideIndex + 1)
       })
     }
-    if ( slideIndex + 1 === 10 ) {
+    if ( slideIndex + 1 === 1 && window.extentWatch ) {
+      position.hide()
       window.extentWatch.remove()
     }
     var camera = slides.getItemAt(slideIndex).viewpoint.camera
