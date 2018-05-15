@@ -99,13 +99,20 @@
         type: "simple", // autocasts as new SimpleRenderer()
         symbol: {
           type: "point-3d",  // autocasts as new PointSymbol3D()
-          symbolLayers: [
-            {
-              type: "icon",  // autocasts as new IconSymbol3DLayer()
-              // add properties for the IconSymbol3DLayer here
-            }
-          ],
-
+          // symbolLayers: [
+          //   {
+          //     type: "icon",  // autocasts as new IconSymbol3DLayer()
+          //     // add properties for the IconSymbol3DLayer here
+          //   }
+          // ],
+          symbolLayers: [{
+            type: "object",  // autocasts as new ObjectSymbol3DLayer()
+            width: 2,  // diameter of the object from east to west in meters
+            height: 2,  // height of the object in meters
+            depth: 2,  // diameter of the object from north to south in meters
+            resource: { primitive: "sphere" },
+            material: { color: [255, 85, 0, 0.5] }
+          }],
           verticalOffset: {
             screenLength: 15,
             maxWorldLength: 200,
