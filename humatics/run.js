@@ -7,11 +7,12 @@ require([
   "esri/layers/Layer",
   
   "humatics/anchors",
-  "humatics/position",
-  "humatics/uwb-points"
+  // "humatics/position",
+  // "humatics/uwb-points"
 ], function(
   SceneView, WebScene, Point, Camera, id, Layer, 
-  anchors, position, uwb
+  anchors
+  // , position, uwbPoints
 ) {
 
   var idKey = 'odn-fly-through'
@@ -44,6 +45,11 @@ require([
   var dotMax = 10
 
   var slideIndex = 0
+
+  window.uwbFeatures = null
+  window.uwbLayer = null
+  var uwbPosition = 0
+  var lastSlideCamera = null
   
   window.layerCount = 0
   window.status = 'play'
@@ -52,7 +58,7 @@ require([
   
   window.scene = new WebScene({
     portalItem: { // autocasts as new PortalItem()
-      id: "296ea2b440284575ad67304c68b7ba75"
+      id: "df846a8389ea40a3a449d81e9e7b77d5"
     }
   });
   scene.when(function() {
@@ -75,18 +81,18 @@ require([
     var views = Object.values(layerViews)
     // console.log('views length and layer count', views.length, layerCount)
     // console.log('e.layerView', e.layer.id, e.layer.fields.map(f => f.name).join(', '))
-    layersLoaded.innerHTML = views.length + '/' + layerCount + '   ' 
-    if ( e.layer.id === uwbLayerId ) {
-      // console.log('uwb layer', e.layer)
-      e.layer.queryFeatures().then(function(result) {
-        // console.log('uwb result', result)
-        var uwb = result.features.filter(function(feature) {
-          return feature.attributes.Name === 'UWB'
-        })
-        // console.log('uwb feature', uwb)
-        position.setLineGeom(uwb[0].geometry)
-      })
-    }
+    // layersLoaded.innerHTML = views.length + '/' + layerCount + '   ' 
+    // if ( e.layer.id === uwbLayerId ) {
+    //   // console.log('uwb layer', e.layer)
+    //   e.layer.queryFeatures().then(function(result) {
+    //     // console.log('uwb result', result)
+    //     var uwb = result.features.filter(function(feature) {
+    //       return feature.attributes.Name === 'UWB'
+    //     })
+    //     // console.log('uwb feature', uwb)
+    //     position.setLineGeom(uwb[0].geometry)
+    //   })
+    // }
     if ( views.length === window.layerCount ) {
       layersLoaded.innerHTML += '<br>Getting data:  .'
       dotCount += 1
@@ -102,10 +108,10 @@ require([
         }
         if ( !stillUpdating && !view.updating ) {
           anchors.addTo(scene)
-          position.addTo(scene, {
-            latitude: view.camera.latitude,
-            longitude: view.camera.longitude
-          })
+          // position.addTo(scene, {
+          //   latitude: view.camera.latitude,
+          //   longitude: view.camera.longitude
+          // })
 
           // GPS signal quality raster
           Layer.fromPortalItem({
@@ -116,6 +122,26 @@ require([
             window.satLayer = layer
             console.log('layer', layer)
             layer.opacity = 0.3
+            // layer.elevationInfo = { 
+            //   mode: 'relative-to-ground',
+            //   offset: 10
+            // }
+            scene.add(layer);
+          })
+          .catch(function rejection(err) {
+            console.log("Layer failed to load: ", err);
+          });
+
+          // Add the uwb points (invisible)
+          // http://onedegreenorth.maps.arcgis.com/home/item.html?id=e4ce4227c9944e49be4cdac44cbaf0d8
+          Layer.fromPortalItem({
+            portalItem: {
+              id: "e4ce4227c9944e49be4cdac44cbaf0d8"
+            }
+          }).then(function addLayer(layer) {
+            window.uwbLayer = layer
+            console.log('uwb layer', layer)
+            layer.opacity = 0
             // layer.elevationInfo = { 
             //   mode: 'relative-to-ground',
             //   offset: 10
@@ -160,25 +186,75 @@ require([
     if ( window.status === 'stop' ) {
       return
     }
+
+    if ( uwbLayer && !uwbFeatures ) {
+      uwbLayer.queryFeatures()
+        .then(function(results) {
+          // console.log('uwb features', results)
+          uwbFeatures = results.features
+          uwbFeatures.sort(function(a, b) {
+            a = a.attributes.uwb_timestamp
+            b = b.attributes.uwb_timestamp
+            return a - b
+          })
+          console.log('sorted', uwbFeatures)
+        })
+        .catch(function(error) {
+          console.log('uwb query error', error)
+        })
+    }
     
     currentSlide.innerHTML = (slideIndex + 1) + '/' + slides.length
 
     // Move the dot from slides 6 - 16.
-    if ( slideIndex + 1 === 6 ) {
-      position.show()
+    if ( slideIndex + 1 === 7 ) {
+      // position.show()
       // window.extentWatch = view.watch('extent', function(newVal, oldVal, prop, target) {
-      window.extentWatch = view.watch('extent', function(newVal) {
-        position.moveTo(newVal, slideIndex + 1)
-      })
+      // window.extentWatch = view.watch('extent', function(newVal) {
+      //   position.moveTo(newVal, slideIndex + 1)
+      // })
       window.satLayer.visible = false
+      var uwbStep = 100
+      function uwbFly() {
+        if ( uwbPosition < uwbFeatures.length - 101 ) {
+          // console.log('flying...', uwbPosition)
+          var uwbCamera = lastSlideCamera.clone()
+          console.log('uwb anchors', uwbFeatures[uwbPosition].attributes.anchor_list)
+          var uwbGeometry = uwbFeatures[uwbPosition].geometry
+          uwbCamera.position.longitude = uwbGeometry.longitude
+          uwbCamera.position.latitude = uwbGeometry.latitude
+          // console.log('next lat lon', uwbCamera.position.latitude, uwbCamera.position.longitude)
+
+          var uwbCurrent = uwbFeatures[uwbPosition].attributes.uwb_timestamp
+          var uwbNext = uwbFeatures[uwbPosition + uwbStep].attributes.uwb_timestamp
+          var uwbDuration = uwbNext - uwbCurrent
+          // view.goTo(uwbCamera, { duration: uwbDuration })
+          view.goTo(uwbCamera)
+            .then(function() {
+              if ( window.status !== 'stop' ) {
+                uwbPosition += uwbStep
+                uwbFly()
+              }
+            })
+        } else {
+          console.log('back to slides...', uwbPosition)
+          uwbPosition = 0
+          slideIndex = slides.length - 1
+          navigate(window.view, slides)
+        }
+      }
+      console.log('calling uwb fly...')
+      uwbFly()
+      return
     }
-    if ( (slideIndex + 1 === 1 || slideIndex + 1 === 17) && window.extentWatch ) {
-      position.hide()
-      window.extentWatch.remove()
+    // if ( (slideIndex + 1 === 1 || slideIndex + 1 === 17) && window.extentWatch ) {
+    if ( (slideIndex + 1 === 1 || slideIndex + 1 === 17) && window.satLayer ) {
+      // position.hide()
+      // window.extentWatch.remove()
       window.satLayer.visible = true
     }
     var camera = slides.getItemAt(slideIndex).viewpoint.camera
-    // console.log('next camera and slideIndex', camera, slideIndex)
+    console.log('next camera and slideIndex', camera, slideIndex)
     var advance = function() {
       slideIndex += 1
       if ( slideIndex === slides.length ) {
@@ -187,6 +263,7 @@ require([
       navigate(window.view, slides)
     }
 
+    lastSlideCamera = camera
     window.gotoResult = view.goTo(camera, {
       duration: defaults.timeDelay,
       easing: 'linear'

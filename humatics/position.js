@@ -70,7 +70,14 @@ define([
         }))
 
         // Find UWB anchors.
-        // uwbPoints.findPoint(nearest.coordinate)
+        console.log('querying point...', nearest)
+        uwbPoints.findPoint(nearest.coordinate)
+          .then(function(results) {
+            console.log('results', result)
+          })
+          .catch(function(error) {
+            console.log('uwb error', error)
+          })
       }
     },
     setLineGeom: function(geom) {
