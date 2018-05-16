@@ -1,7 +1,7 @@
 define(['esri/layers/CSVLayer'], function(CSVLayer) {
   return {
     addTo: function(scene) {
-      console.log('loading csv layer')
+      // console.log('loading csv layer')
       var url = "data/anchors.csv";
 
       var template = {
@@ -80,9 +80,7 @@ define(['esri/layers/CSVLayer'], function(CSVLayer) {
           }
         }
       };
-      console.log('adding to scene')
       scene.add(csvLayer)
-      console.log('called scene.add')
     }
   }
 })

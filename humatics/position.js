@@ -1,11 +1,13 @@
 define([
   'esri/layers/GraphicsLayer',
   'esri/Graphic',
-  'esri/geometry/geometryEngine'
+  'esri/geometry/geometryEngine',
+  'humatics/uwb-points'
 ], function(
   GraphicsLayer,
   Graphic,
-  geometryEngine
+  geometryEngine,
+  uwbPoints
 ) {
   var graphicsLayer = new GraphicsLayer({
     elevationInfo: { 
@@ -66,6 +68,9 @@ define([
           geometry: nextGeom,
           symbol: markerSymbol
         }))
+
+        // Find UWB anchors.
+        // uwbPoints.findPoint(nearest.coordinate)
       }
     },
     setLineGeom: function(geom) {

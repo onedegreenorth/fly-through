@@ -7,10 +7,11 @@ require([
   "esri/layers/Layer",
   
   "humatics/anchors",
-  "humatics/position"
+  "humatics/position",
+  "humatics/uwb-points"
 ], function(
   SceneView, WebScene, Point, Camera, id, Layer, 
-  anchors, position
+  anchors, position, uwb
 ) {
 
   var idKey = 'odn-fly-through'
@@ -112,14 +113,18 @@ require([
               id: "308a32fffb4c4efda5f3d437aee1f9e2"
             }
           }).then(function addLayer(layer) {
+            window.satLayer = layer
+            console.log('layer', layer)
+            layer.opacity = 0.3
+            // layer.elevationInfo = { 
+            //   mode: 'relative-to-ground',
+            //   offset: 10
+            // }
             scene.add(layer);
           })
           .catch(function rejection(err) {
             console.log("Layer failed to load: ", err);
           });
-          
-    
-          
 
           navigate(window.view, scene.presentation.slides)
           clearInterval(window.timer)
@@ -144,6 +149,7 @@ require([
             if ( window.extentWatch ) {
               window.extentWatch.remove()
             }
+            window.gotoResult.cancel()
           })
         }
       }, 200)
@@ -157,20 +163,22 @@ require([
     
     currentSlide.innerHTML = (slideIndex + 1) + '/' + slides.length
 
-    // Move the dot from slides 4 - 10.
-    if ( slideIndex + 1 === 3 ) {
+    // Move the dot from slides 7 - 17.
+    if ( slideIndex + 1 === 7 ) {
       position.show()
       // window.extentWatch = view.watch('extent', function(newVal, oldVal, prop, target) {
       window.extentWatch = view.watch('extent', function(newVal) {
         position.moveTo(newVal, slideIndex + 1)
       })
+      window.satLayer.visible = false
     }
     if ( slideIndex + 1 === 1 && window.extentWatch ) {
       position.hide()
       window.extentWatch.remove()
+      window.satLayer.visible = true
     }
     var camera = slides.getItemAt(slideIndex).viewpoint.camera
-    // console.log('next camera', camera)
+    // console.log('next camera and slideIndex', camera, slideIndex)
     var advance = function() {
       slideIndex += 1
       if ( slideIndex === slides.length ) {
@@ -179,10 +187,11 @@ require([
       navigate(window.view, slides)
     }
 
-    view.goTo(camera, {
+    window.gotoResult = view.goTo(camera, {
       duration: defaults.timeDelay,
       easing: 'linear'
     }).then(advance)
+    // console.log('goto result', gotoResult)
   }
   
   view.ui.add(controls, 'top-right');
