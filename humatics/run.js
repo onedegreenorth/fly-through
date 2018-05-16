@@ -4,10 +4,13 @@ require([
   "esri/geometry/Point",
   "esri/Camera",
   "esri/identity/IdentityManager",
+  "esri/layers/Layer",
+  
   "humatics/anchors",
   "humatics/position"
 ], function(
-  SceneView, WebScene, Point, Camera, id, anchors, position
+  SceneView, WebScene, Point, Camera, id, Layer, 
+  anchors, position
 ) {
 
   var idKey = 'odn-fly-through'
@@ -102,6 +105,21 @@ require([
             latitude: view.camera.latitude,
             longitude: view.camera.longitude
           })
+
+          // GPS signal quality raster
+          Layer.fromPortalItem({
+            portalItem: {
+              id: "308a32fffb4c4efda5f3d437aee1f9e2"
+            }
+          }).then(function addLayer(layer) {
+            scene.add(layer);
+          })
+          .catch(function rejection(err) {
+            console.log("Layer failed to load: ", err);
+          });
+          
+    
+          
 
           navigate(window.view, scene.presentation.slides)
           clearInterval(window.timer)
