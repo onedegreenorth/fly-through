@@ -163,8 +163,8 @@ require([
     
     currentSlide.innerHTML = (slideIndex + 1) + '/' + slides.length
 
-    // Move the dot from slides 7 - 17.
-    if ( slideIndex + 1 === 7 ) {
+    // Move the dot from slides 6 - 16.
+    if ( slideIndex + 1 === 6 ) {
       position.show()
       // window.extentWatch = view.watch('extent', function(newVal, oldVal, prop, target) {
       window.extentWatch = view.watch('extent', function(newVal) {
@@ -172,7 +172,7 @@ require([
       })
       window.satLayer.visible = false
     }
-    if ( slideIndex + 1 === 1 && window.extentWatch ) {
+    if ( (slideIndex + 1 === 1 || slideIndex + 1 === 17) && window.extentWatch ) {
       position.hide()
       window.extentWatch.remove()
       window.satLayer.visible = true
