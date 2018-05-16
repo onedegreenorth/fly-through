@@ -110,7 +110,7 @@ require([
           // GPS signal quality raster
           Layer.fromPortalItem({
             portalItem: {
-              id: "308a32fffb4c4efda5f3d437aee1f9e2"
+              id: "3764f8d08ddb4ec38f17c7e4864a7df0"
             }
           }).then(function addLayer(layer) {
             window.satLayer = layer
