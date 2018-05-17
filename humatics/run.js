@@ -174,6 +174,9 @@ require([
             return a - b
           })
           console.log('sorted', uwbFeatures)
+
+          // Make a line out of the points.
+          position.addLine(scene, uwbFeatures)
         })
         .catch(function(error) {
           console.log('uwb query error', error)

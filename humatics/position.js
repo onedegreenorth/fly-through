@@ -9,6 +9,7 @@ define([
   Polyline,
   uwbPoints
 ) {
+  var blue = [77, 144, 254]
   var graphicsLayer = new GraphicsLayer({
     elevationInfo: { 
       mode: 'relative-to-ground',
@@ -17,7 +18,7 @@ define([
   });
   var markerSymbol = {
     type: "simple-marker",
-    color: [77, 144, 254,],
+    color: blue,
     outline: {
       color: [255, 255, 255],
       width: 2
@@ -29,7 +30,17 @@ define([
     width: 4
   };
 
-  var lineGeom = null
+  var uwbLine = new GraphicsLayer({
+    elevationInfo: { 
+      mode: 'relative-to-ground',
+      offset: 10
+    }
+  })
+  var uwbLineSymbol = {
+    type: "simple-line",
+    color: blue,
+    width: 4
+  }
 
   return {
     addTo: function(scene, start) {
@@ -83,14 +94,23 @@ define([
           console.log('CSV layer query error', error)
         })
     },
-    setLineGeom: function(geom) {
-      lineGeom = geom
-    },
     show: function() {
       graphicsLayer.visible = true
     },
     hide: function() {
       graphicsLayer.visible = false
+    },
+    addLine: function(scene, features) {
+      var uwbLineGeom = { type: 'polyline' }
+      var path = features.map(function(feature) {
+        return [feature.geometry.x, feature.geometry.y]
+      })
+      uwbLineGeom.paths = [ path ]
+      uwbLine.add(new Graphic({
+        geometry: uwbLineGeom,
+        symbol: uwbLineSymbol
+      }))
+      scene.add(uwbLine)
     }
   }
 })
