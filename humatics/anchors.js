@@ -62,7 +62,8 @@ define(['esri/layers/CSVLayer'], function(CSVLayer) {
             height: 2,
             depth: 2,
             resource: { primitive: "sphere" },
-            material: { color: [255, 85, 0, 0.75] }
+            // material: { color: [255, 85, 0, 0.75] }
+            material: { color: [0, 255, 255, 0.75] }
           }],
           verticalOffset: {
             screenLength: 10,
