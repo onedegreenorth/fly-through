@@ -1,12 +1,12 @@
 define([
   'esri/layers/GraphicsLayer',
   'esri/Graphic',
-  'esri/geometry/geometryEngine',
+  'esri/geometry/Polyline',
   'humatics/uwb-points'
 ], function(
   GraphicsLayer,
   Graphic,
-  geometryEngine,
+  Polyline,
   uwbPoints
 ) {
   var graphicsLayer = new GraphicsLayer({
@@ -17,11 +17,16 @@ define([
   });
   var markerSymbol = {
     type: "simple-marker",
-    color: [226, 119, 40],
+    color: [77, 144, 254,],
     outline: {
       color: [255, 255, 255],
       width: 2
     }
+  };
+  var lineSymbol = {
+    type: "simple-line",
+    color: [255, 85, 0, 0.5],
+    width: 4
   };
 
   var lineGeom = null
@@ -41,44 +46,42 @@ define([
       });
       graphicsLayer.add(pointGraphic);
     },
-    moveTo: function(extent, slide) {
-      // console.log('moveTo::graphicsLayer', graphicsLayer)
-      // console.log('moveTo::extent', extent)
+    moveTo: function(point) {
       graphicsLayer.removeAll()
-      if ( lineGeom ) {
-        var nearest
-        if ( slide === 3 ) {
-          // Use southeast corner to pick up the first part of th track
-          nearest = geometryEngine.nearestVertex(lineGeom, {
-            type: 'point',
-            x: extent.center.x,
-            y: extent.ymin
-          })
-        } else {
-          nearest = geometryEngine.nearestVertex(lineGeom, extent.center)
-        }
-        // console.log('nearest', nearest)
-        var nextGeom = {
-          type: 'point',
-          x: nearest.coordinate.longitude,
-          y: nearest.coordinate.latitude
-        }
-        // graphic.geometry = nextGeom
-        graphicsLayer.add(new Graphic({
-          geometry: nextGeom,
-          symbol: markerSymbol
-        }))
-
-        // Find UWB anchors.
-        console.log('querying point...', nearest)
-        uwbPoints.findPoint(nearest.coordinate)
-          .then(function(results) {
-            console.log('results', result)
-          })
-          .catch(function(error) {
-            console.log('uwb error', error)
-          })
+      var nextGeom = {
+        type: 'point',
+        x: point.longitude,
+        y: point.latitude
       }
+      graphicsLayer.add(new Graphic({
+        geometry: nextGeom,
+        symbol: markerSymbol
+      }))
+
+      window.csvLayer.queryFeatures()
+        .then(function(result) {
+          // console.log('CSV query result', result)
+          // console.log('nextGeom', nextGeom, point)
+          result.features.forEach(function(feature) {
+            var lineGeom = {
+              type: 'polyline',
+              paths: [
+                [ 
+                  [point.longitude, point.latitude],
+                  [feature.geometry.longitude, feature.geometry.latitude]
+                ]
+              ]
+            }
+            // console.log('lineGeom', lineGeom)
+            graphicsLayer.add(new Graphic({
+              geometry: lineGeom,
+              symbol: lineSymbol
+            }))
+          })
+        })
+        .catch(function(error) {
+          console.log('CSV layer query error', error)
+        })
     },
     setLineGeom: function(geom) {
       lineGeom = geom

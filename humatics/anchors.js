@@ -65,9 +65,9 @@ define(['esri/layers/CSVLayer'], function(CSVLayer) {
             material: { color: [255, 85, 0, 0.75] }
           }],
           verticalOffset: {
-            screenLength: 15,
+            screenLength: 10,
             maxWorldLength: 200,
-            minWorldLength: 15
+            minWorldLength: 10
           },
 
           // callout: {

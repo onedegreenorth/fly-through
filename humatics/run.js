@@ -7,12 +7,10 @@ require([
   "esri/layers/Layer",
   
   "humatics/anchors",
-  // "humatics/position",
-  // "humatics/uwb-points"
+  "humatics/position"
 ], function(
   SceneView, WebScene, Point, Camera, id, Layer, 
-  anchors
-  // , position, uwbPoints
+  anchors, position
 ) {
 
   var idKey = 'odn-fly-through'
@@ -79,20 +77,7 @@ require([
   view.on('layerview-create', (e) => {
     layerViews[e.layer.id] = e.layerView
     var views = Object.values(layerViews)
-    // console.log('views length and layer count', views.length, layerCount)
-    // console.log('e.layerView', e.layer.id, e.layer.fields.map(f => f.name).join(', '))
-    // layersLoaded.innerHTML = views.length + '/' + layerCount + '   ' 
-    // if ( e.layer.id === uwbLayerId ) {
-    //   // console.log('uwb layer', e.layer)
-    //   e.layer.queryFeatures().then(function(result) {
-    //     // console.log('uwb result', result)
-    //     var uwb = result.features.filter(function(feature) {
-    //       return feature.attributes.Name === 'UWB'
-    //     })
-    //     // console.log('uwb feature', uwb)
-    //     position.setLineGeom(uwb[0].geometry)
-    //   })
-    // }
+
     if ( views.length === window.layerCount ) {
       layersLoaded.innerHTML += '<br>Getting data:  .'
       dotCount += 1
@@ -108,10 +93,10 @@ require([
         }
         if ( !stillUpdating && !view.updating ) {
           anchors.addTo(scene)
-          // position.addTo(scene, {
-          //   latitude: view.camera.latitude,
-          //   longitude: view.camera.longitude
-          // })
+          position.addTo(scene, {
+            latitude: view.camera.latitude,
+            longitude: view.camera.longitude
+          })
 
           // GPS signal quality raster
           Layer.fromPortalItem({
@@ -133,10 +118,10 @@ require([
           });
 
           // Add the uwb points (invisible)
-          // http://onedegreenorth.maps.arcgis.com/home/item.html?id=e4ce4227c9944e49be4cdac44cbaf0d8
+          // http://onedegreenorth.maps.arcgis.com/home/item.html?id=3a9c31b3c0e24c74a42277554edc5473
           Layer.fromPortalItem({
             portalItem: {
-              id: "e4ce4227c9944e49be4cdac44cbaf0d8"
+              id: "af8a02b5f0bc45049e692f7363c52c57"
             }
           }).then(function addLayer(layer) {
             window.uwbLayer = layer
@@ -206,30 +191,42 @@ require([
     
     currentSlide.innerHTML = (slideIndex + 1) + '/' + slides.length
 
-    // Move the dot from slides 6 - 16.
-    if ( slideIndex + 1 === 7 ) {
-      // position.show()
+    if ( slideIndex + 1 === 8 ) {
+      position.show()
       // window.extentWatch = view.watch('extent', function(newVal, oldVal, prop, target) {
       // window.extentWatch = view.watch('extent', function(newVal) {
       //   position.moveTo(newVal, slideIndex + 1)
       // })
       window.satLayer.visible = false
-      var uwbStep = 100
+      var uwbStep = 20
       function uwbFly() {
-        if ( uwbPosition < uwbFeatures.length - 101 ) {
-          // console.log('flying...', uwbPosition)
+        if ( uwbPosition < uwbFeatures.length - 11 ) {
+          console.log('flying...', uwbPosition)
           var uwbCamera = lastSlideCamera.clone()
-          console.log('uwb anchors', uwbFeatures[uwbPosition].attributes.anchor_list)
+          var anchors = uwbFeatures[uwbPosition].attributes.anchor_list
+          // console.log('uwb anchors', anchors)
+          anchors = anchors.split(',').map(function(name) {
+            return "'" + name + "'"
+          }).join(',')
+          // console.log('uwb anchors def exp', anchors)
+          var definition = 'name IN (' + anchors  + ')'
+          // console.log('uwb def exp', definition)
+          // Build a def exp for anchors
+          csvLayer.definitionExpression = definition
           var uwbGeometry = uwbFeatures[uwbPosition].geometry
           uwbCamera.position.longitude = uwbGeometry.longitude
           uwbCamera.position.latitude = uwbGeometry.latitude
           // console.log('next lat lon', uwbCamera.position.latitude, uwbCamera.position.longitude)
+          position.moveTo(uwbGeometry)
 
           var uwbCurrent = uwbFeatures[uwbPosition].attributes.uwb_timestamp
           var uwbNext = uwbFeatures[uwbPosition + uwbStep].attributes.uwb_timestamp
           var uwbDuration = uwbNext - uwbCurrent
           // view.goTo(uwbCamera, { duration: uwbDuration })
-          view.goTo(uwbCamera)
+          view.goTo(uwbGeometry, { 
+            duration: 20,
+            easing: 'linear'
+          })
             .then(function() {
               if ( window.status !== 'stop' ) {
                 uwbPosition += uwbStep
@@ -247,11 +244,10 @@ require([
       uwbFly()
       return
     }
-    // if ( (slideIndex + 1 === 1 || slideIndex + 1 === 17) && window.extentWatch ) {
     if ( (slideIndex + 1 === 1 || slideIndex + 1 === 17) && window.satLayer ) {
-      // position.hide()
-      // window.extentWatch.remove()
+      position.hide()
       window.satLayer.visible = true
+      csvLayer.definitionExpression = null
     }
     var camera = slides.getItemAt(slideIndex).viewpoint.camera
     console.log('next camera and slideIndex', camera, slideIndex)
