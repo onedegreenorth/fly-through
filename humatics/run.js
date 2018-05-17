@@ -198,7 +198,7 @@ require([
       //   position.moveTo(newVal, slideIndex + 1)
       // })
       window.satLayer.visible = false
-      var uwbStep = 20
+      var uwbStep = 10
       function uwbFly() {
         if ( uwbPosition < uwbFeatures.length - 11 ) {
           console.log('flying...', uwbPosition)
