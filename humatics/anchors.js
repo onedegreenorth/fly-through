@@ -70,14 +70,14 @@ define(['esri/layers/CSVLayer'], function(CSVLayer) {
             minWorldLength: 15
           },
 
-          callout: {
-            type: "line",
-            color: "white",
-            size: 2,
-            border: {
-              color: [255, 255, 255]
-            }
-          }
+          // callout: {
+          //   type: "line",
+          //   color: "white",
+          //   size: 2,
+          //   border: {
+          //     color: [255, 255, 255]
+          //   }
+          // }
         }
       };
       scene.add(csvLayer)
