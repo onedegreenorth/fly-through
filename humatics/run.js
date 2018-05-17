@@ -198,6 +198,7 @@ require([
       //   position.moveTo(newVal, slideIndex + 1)
       // })
       window.satLayer.visible = false
+      window.csvLayer.visible = true
       var uwbStep = 10
       function uwbFly() {
         if ( uwbPosition < uwbFeatures.length - 11 ) {
@@ -247,6 +248,7 @@ require([
     if ( (slideIndex + 1 === 1 || slideIndex + 1 === 17) && window.satLayer ) {
       position.hide()
       window.satLayer.visible = true
+      window.csvLayer.visible = false
       csvLayer.definitionExpression = null
     }
     var camera = slides.getItemAt(slideIndex).viewpoint.camera

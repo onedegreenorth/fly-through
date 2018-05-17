@@ -13,6 +13,7 @@ define(['esri/layers/CSVLayer'], function(CSVLayer) {
         url: url,
         copyright: "Humatics",
         popupTemplate: template,
+        visible: false,
         elevationInfo: {
           mode: "relative-to-scene"
         },

@@ -12,7 +12,7 @@ define([
   var graphicsLayer = new GraphicsLayer({
     elevationInfo: { 
       mode: 'relative-to-ground',
-      offset: 10
+      offset: 20
     }
   });
   var markerSymbol = {
