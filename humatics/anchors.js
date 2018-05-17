@@ -15,7 +15,8 @@ define(['esri/layers/CSVLayer'], function(CSVLayer) {
         popupTemplate: template,
         visible: false,
         elevationInfo: {
-          mode: "relative-to-scene"
+          mode: "relative-to-ground",
+          offset: 10
         },
         labelingInfo: [{
           labelPlacement: "above-center",
@@ -34,20 +35,7 @@ define(['esri/layers/CSVLayer'], function(CSVLayer) {
                 size: 2
               },
               size: 10
-            }],
-            verticalOffset: {
-              screenLength: 150,
-              maxWorldLength: 2000,
-              minWorldLength: 30
-            },
-            callout: {
-              type: "line",
-              size: 0.5,
-              color: [0, 0, 0],
-              border: {
-                color: [255, 255, 255, 0.7]
-              }
-            }
+            }]
           }
         }],
         labelsVisible: true
@@ -63,23 +51,8 @@ define(['esri/layers/CSVLayer'], function(CSVLayer) {
             height: 2,
             depth: 2,
             resource: { primitive: "sphere" },
-            // material: { color: [255, 85, 0, 0.75] }
             material: { color: [0, 255, 255, 0.75] }
-          }],
-          verticalOffset: {
-            screenLength: 10,
-            maxWorldLength: 200,
-            minWorldLength: 10
-          },
-
-          // callout: {
-          //   type: "line",
-          //   color: "white",
-          //   size: 2,
-          //   border: {
-          //     color: [255, 255, 255]
-          //   }
-          // }
+          }]
         }
       };
       scene.add(csvLayer)

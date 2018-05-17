@@ -18,7 +18,6 @@ require([
 
   var defaults = {
     timeDelay: 6000,
-    tilt: 80, // unused
     heading: 22.452496945982112 // unused
   }
   var controls = document.getElementById('controls')
@@ -107,10 +106,6 @@ require([
             window.satLayer = layer
             console.log('layer', layer)
             layer.opacity = 0.3
-            // layer.elevationInfo = { 
-            //   mode: 'relative-to-ground',
-            //   offset: 10
-            // }
             scene.add(layer);
           })
           .catch(function rejection(err) {
@@ -127,10 +122,6 @@ require([
             window.uwbLayer = layer
             console.log('uwb layer', layer)
             layer.opacity = 0
-            // layer.elevationInfo = { 
-            //   mode: 'relative-to-ground',
-            //   offset: 10
-            // }
             scene.add(layer);
           })
           .catch(function rejection(err) {

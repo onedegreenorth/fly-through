@@ -12,7 +12,7 @@ define([
   var graphicsLayer = new GraphicsLayer({
     elevationInfo: { 
       mode: 'relative-to-ground',
-      offset: 20
+      offset: 10
     }
   });
   var markerSymbol = {
@@ -25,7 +25,6 @@ define([
   };
   var lineSymbol = {
     type: "simple-line",
-    // color: [255, 85, 0, 0.5],
     color: [0, 255, 255, 0.75],
     width: 4
   };
