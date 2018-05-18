@@ -48,7 +48,8 @@ define([
       var point = {
         type: "point",
         x: start.longitude,
-        y: start.latitude
+        y: start.latitude,
+        z: 2
       };
       
       var pointGraphic = new Graphic({
@@ -62,7 +63,8 @@ define([
       var nextGeom = {
         type: 'point',
         x: point.longitude,
-        y: point.latitude
+        y: point.latitude,
+        z: 2
       }
       graphicsLayer.add(new Graphic({
         geometry: nextGeom,
@@ -78,8 +80,8 @@ define([
               type: 'polyline',
               paths: [
                 [ 
-                  [point.longitude, point.latitude],
-                  [feature.geometry.longitude, feature.geometry.latitude]
+                  [point.longitude, point.latitude, 2],
+                  [feature.geometry.longitude, feature.geometry.latitude, 0]
                 ]
               ]
             }
