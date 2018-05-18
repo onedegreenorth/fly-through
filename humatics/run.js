@@ -5,11 +5,12 @@ require([
   "esri/Camera",
   "esri/identity/IdentityManager",
   "esri/layers/Layer",
+  "esri/layers/FeatureLayer",
   
   "humatics/anchors",
   "humatics/position"
 ], function(
-  SceneView, WebScene, Point, Camera, id, Layer, 
+  SceneView, WebScene, Point, Camera, id, Layer, FeatureLayer,
   anchors, position
 ) {
 
@@ -127,6 +128,19 @@ require([
           .catch(function rejection(err) {
             console.log("Layer failed to load: ", err);
           });
+
+          // GPS track from KML
+          var gpsTrack = new FeatureLayer({
+            portalItem: {
+              id: "cc20531fae764b86b966043dac39333c"
+            },
+            elevationInfo: {
+              mode: 'relative-to-ground',
+              offset: 10
+            }
+          })
+          scene.add(gpsTrack)
+          console.log('added gps track')
 
           navigate(window.view, scene.presentation.slides)
           clearInterval(window.timer)
