@@ -27,7 +27,7 @@ define([
   var lineSymbol = {
     type: "simple-line",
     color: [0, 255, 255, 0.75],
-    width: 4
+    width: 2
   };
 
   var uwbLine = new GraphicsLayer({
