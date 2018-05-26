@@ -115,7 +115,7 @@ require([
           });
 
           // GPS track from KML
-          var gpsTrack = new FeatureLayer({
+          window.gpsTrack = new FeatureLayer({
             portalItem: {
               id: "cc20531fae764b86b966043dac39333c"
             },
@@ -125,7 +125,6 @@ require([
             }
           })
           scene.add(gpsTrack)
-          console.log('added gps track')
 
           navigate(window.view, scene.presentation.slides)
           clearInterval(window.timer)
@@ -206,6 +205,9 @@ require([
           // console.log('uwb def exp', definition)
           // Build a def exp for anchors
           csvLayer.definitionExpression = definition
+
+          var anchorDef = 'name NOT IN (' + anchors + ')'
+          anchorLayer.definitionExpression = anchorDef
           var uwbGeometry = uwbFeatures[uwbPosition].geometry
           uwbCamera.position.longitude = uwbGeometry.longitude
           uwbCamera.position.latitude = uwbGeometry.latitude
@@ -241,6 +243,7 @@ require([
       position.hide()
       window.csvLayer.visible = false
       csvLayer.definitionExpression = null
+      anchorLayer.definitionExpression = null
     }
     var camera = slides.getItemAt(slideIndex).viewpoint.camera
     console.log('next camera and slideIndex', camera, slideIndex)
