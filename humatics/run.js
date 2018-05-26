@@ -98,21 +98,6 @@ require([
             longitude: view.camera.longitude
           })
 
-          // GPS signal quality raster
-          Layer.fromPortalItem({
-            portalItem: {
-              id: "3764f8d08ddb4ec38f17c7e4864a7df0"
-            }
-          }).then(function addLayer(layer) {
-            window.satLayer = layer
-            console.log('layer', layer)
-            layer.opacity = 0.3
-            scene.add(layer);
-          })
-          .catch(function rejection(err) {
-            console.log("Layer failed to load: ", err);
-          });
-
           // Add the uwb points (invisible)
           // http://onedegreenorth.maps.arcgis.com/home/item.html?id=3a9c31b3c0e24c74a42277554edc5473
           Layer.fromPortalItem({
@@ -205,7 +190,6 @@ require([
       // window.extentWatch = view.watch('extent', function(newVal) {
       //   position.moveTo(newVal, slideIndex + 1)
       // })
-      window.satLayer.visible = false
       window.csvLayer.visible = true
       var uwbStep = 10
       function uwbFly() {
@@ -253,9 +237,8 @@ require([
       uwbFly()
       return
     }
-    if ( (slideIndex + 1 === 1 || slideIndex + 1 === 17) && window.satLayer ) {
+    if ( slideIndex + 1 === 1 || slideIndex + 1 === 17 ) {
       position.hide()
-      window.satLayer.visible = true
       window.csvLayer.visible = false
       csvLayer.definitionExpression = null
     }
