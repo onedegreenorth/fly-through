@@ -14,6 +14,16 @@ require([
   anchors, position
 ) {
 
+  var qs = window.location.search
+  var sceneId
+  if ( qs && qs.indexOf('sceneId=') > -1 ) {
+    sceneId = qs.split('sceneId=')[1]
+  }
+  if ( !sceneId ) {
+    document.getElementById('viewDiv').innerHTML = 'Make sure the url includes a sceneId query string parameter, i.e. <a href="./slides-anchors.html?sceneId=df846a8389ea40a3a449d81e9e7b77d5">slides-anchors.html?sceneId=df846a8389ea40a3a449d81e9e7b77d5</a>'
+    return
+  }
+
   var idKey = 'odn-fly-through'
   loadIdManager()
 

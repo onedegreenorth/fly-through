@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title></title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.7/esri/css/main.css">
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+    #controls {
+      background-color: #fff;
+      line-height: 2em;
+      padding: 10px;
+      width: 20em;
+    }
+    #current-slide,
+    .bold {
+      font-weight: 700
+    }
+    #layer-info {
+      transition: opacity 1s;
+    }
+  </style>
+
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+  <div id="controls" class="esri-widget">
+    <div id="slide-info">
+      Current slide:  <span id="current-slide">N/A</span> 
+    </div>
+    <div>
+      Playback:  
+      <span id="play" class="esri-icon esri-icon-play"></span>
+      <span id="pause" class="esri-icon esri-icon-pause"></span>
+    </div>
+    <div id="layer-info">
+      Layers loaded:  <span id="layers-loaded">x/x</span>
+    </div>
+    <div id="slide-timing">
+      <input type="range" id="slide-duration" min="500" max="15000" step="100" />
+      <label for="slide-duration" id="duration-label">...</label>
+    </div>
+  </div>
+
+  <script>
+    var dojoConfig = {
+      cacheBust: true,
+      paths: { 
+        humatics: location.pathname.replace(/\/[^/]+$/, '') + '/humatics'
+      }
+    };
+  </script>
+  <script src="https://js.arcgis.com/4.7/"></script>
+  <script src="humatics/run.js"></script>
+</body>
+
+</html>
