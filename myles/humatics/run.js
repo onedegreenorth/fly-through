@@ -66,7 +66,7 @@ require([
   
   window.scene = new WebScene({
     portalItem: { // autocasts as new PortalItem()
-      id: "df846a8389ea40a3a449d81e9e7b77d5"
+      id: sceneId
     }
   });
   scene.when(function() {
