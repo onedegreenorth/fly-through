@@ -215,7 +215,7 @@ require([
 
           // Highlist anchors for the current position.
           var anchorDef = 'name NOT IN (' + anchors + ')'
-          anchorLayer.definitionExpression = anchorDef
+          // anchorLayer.definitionExpression = anchorDef
 
           // Move the blue dot.
           var uwbGeometry = uwbFeatures[uwbPointIndexes[uwbPosition]].geometry

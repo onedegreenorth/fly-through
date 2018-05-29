@@ -38,7 +38,7 @@ define(['esri/layers/CSVLayer'], function(CSVLayer) {
             }]
           }
         }],
-        labelsVisible: true
+        labelsVisible: false
       });
 
       csvLayer.renderer = {
