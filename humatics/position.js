@@ -113,6 +113,8 @@ define([
         symbol: uwbLineSymbol
       }))
       scene.add(uwbLine)
+
+      return uwbLineGeom
     }
   }
 })

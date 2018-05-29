@@ -2,15 +2,19 @@ require([
   "esri/views/SceneView",
   "esri/WebScene",
   "esri/geometry/Point",
+  "esri/geometry/Polyline",
   "esri/Camera",
   "esri/identity/IdentityManager",
   "esri/layers/Layer",
   "esri/layers/FeatureLayer",
+  "esri/geometry/support/webMercatorUtils",
+  "esri/geometry/geometryEngine",
   
   "humatics/anchors",
   "humatics/position"
 ], function(
-  SceneView, WebScene, Point, Camera, id, Layer, FeatureLayer,
+  SceneView, WebScene, Point, Polyline, Camera, id, Layer, FeatureLayer,
+  webMercatorUtils, geometryEngine,
   anchors, position
 ) {
 
@@ -34,7 +38,7 @@ require([
   var label = document.getElementById('duration-label')
   label.innerHTML = slider.value
   slider.oninput = function(e) {
-    console.log('slider change', e)
+    // console.log('slider change', e)
     label.innerHTML = e.target.value
     defaults.timeDelay = +e.target.value
   }
@@ -48,6 +52,7 @@ require([
   window.uwbLayer = null
   var uwbPosition = 0
   var lastSlideCamera = null
+  var uwbPointIndexes
   
   window.layerCount = 0
   window.status = 'play'
@@ -174,7 +179,8 @@ require([
           console.log('sorted', uwbFeatures)
 
           // Make a line out of the points.
-          position.addLine(scene, uwbFeatures)
+          var lineGraphic = position.addLine(scene, uwbFeatures)
+          uwbPointIndexes = findPointsOneMeterApart(lineGraphic)
         })
         .catch(function(error) {
           console.log('uwb query error', error)
@@ -190,13 +196,13 @@ require([
       //   position.moveTo(newVal, slideIndex + 1)
       // })
       window.csvLayer.visible = true
-      var uwbStep = 10
+      var uwbStep = 1
       var speedUp = 3
       function uwbFly() {
-        if ( uwbPosition < uwbFeatures.length - 11 ) {
-          // console.log('flying...', uwbPosition)
+        if ( uwbPosition < uwbPointIndexes.length - 1 ) {
+          console.log('uwbPosition...', uwbPosition)
           var uwbCamera = lastSlideCamera.clone()
-          var anchors = uwbFeatures[uwbPosition].attributes.anchor_list
+          var anchors = uwbFeatures[uwbPointIndexes[uwbPosition]].attributes.anchor_list
           // console.log('uwb anchors', anchors)
           anchors = anchors.split(',').map(function(name) {
             return "'" + name + "'"
@@ -212,15 +218,15 @@ require([
           anchorLayer.definitionExpression = anchorDef
 
           // Move the blue dot.
-          var uwbGeometry = uwbFeatures[uwbPosition].geometry
+          var uwbGeometry = uwbFeatures[uwbPointIndexes[uwbPosition]].geometry
           uwbCamera.position.longitude = uwbGeometry.longitude
           uwbCamera.position.latitude = uwbGeometry.latitude
           // console.log('next lat lon', uwbCamera.position.latitude, uwbCamera.position.longitude)
           position.moveTo(uwbGeometry)
 
           // Figure out when to next move the blue dot.
-          var uwbCurrent = uwbFeatures[uwbPosition].attributes.uwb_timestamp
-          var uwbNext = uwbFeatures[uwbPosition + uwbStep].attributes.uwb_timestamp
+          var uwbCurrent = uwbFeatures[uwbPointIndexes[uwbPosition]].attributes.uwb_timestamp
+          var uwbNext = uwbFeatures[uwbPointIndexes[uwbPosition + uwbStep]].attributes.uwb_timestamp
           var uwbDuration = (uwbNext - uwbCurrent) / speedUp
           // console.log('uwbDuration', uwbDuration)
           setTimeout(function() {
@@ -228,18 +234,20 @@ require([
               uwbPosition += uwbStep
               uwbFly()
             }
-          }, uwbDuration)
+          // }, uwbDuration)
+          }, 100)
 
           
           // Move the camera every 1/10th as often as the point.
-          if ( uwbPosition % 100 === 0 && (uwbPosition + 100 < uwbFeatures.length) ) {
-            var viewDestination = uwbFeatures[uwbPosition + 100].attributes.uwb_timestamp
+          if ( uwbPosition % 10 === 0 && (uwbPosition + 10 < uwbPointIndexes.length) ) {
+            var viewDestination = uwbFeatures[uwbPointIndexes[uwbPosition + 10]].attributes.uwb_timestamp
             var viewDuration = (viewDestination - uwbCurrent) / speedUp
-            var viewGeometry = uwbFeatures[uwbPosition + 100] 
+            var viewGeometry = uwbFeatures[uwbPointIndexes[uwbPosition + 10]]
             // console.log('viewDuration', viewDuration)
             window.gotoResult = view
               .goTo(viewGeometry, { 
-                duration: viewDuration,
+                // duration: viewDuration,
+                duration: 1000,
                 easing: 'linear'
               })
           }
@@ -251,7 +259,7 @@ require([
           navigate(window.view, slides)
         }
       }
-      console.log('calling uwb fly...')
+      // console.log('calling uwb fly...')
       uwbFly()
       return
     }
@@ -296,6 +304,37 @@ require([
     var idState = JSON.stringify(id.toJSON())
     console.log('unload...', idState)
     localStorage.setItem(idKey, idState)
+  }
+
+  var findPointsOneMeterApart = function(line) {
+    // console.log('find points', line)
+    var vertexIndexes = [0] // Start at the first vertex
+    var runningDistance = 0
+
+    // Project to web mercator to do distances in meters.
+    var webMercLine = webMercatorUtils.geographicToWebMercator(new Polyline(line))
+    // Messing around...calc length, segments, etc.
+    // var geoLen = geometryEngine.geodesicLength(webMercLine, 'meters')
+    // var plaLen = geometryEngine.planarLength(webMercLine, 'meters')
+    // console.log('lengths', geoLen, plaLen)
+
+    var path = line.paths[0]
+    var vertexCount = path.length - 2
+    var pos = 0
+    while ( pos < vertexCount ) {
+      var p1 = webMercatorUtils.geographicToWebMercator(new Point(path[pos]))
+      var p2 = webMercatorUtils.geographicToWebMercator(new Point(path[pos+1]))
+      var dist = geometryEngine.distance(p1, p2, 'meters')
+      runningDistance += dist
+      if ( runningDistance > 1 ) {
+        vertexIndexes.push(pos)
+        runningDistance = 0
+      }
+      pos += 1
+      // console.log('distance', pos, dist)
+    }
+    // console.log('vertex indexes', vertexIndexes)
+    return vertexIndexes
   }
 
 });
