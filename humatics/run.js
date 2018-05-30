@@ -107,7 +107,10 @@ require([
           // http://onedegreenorth.maps.arcgis.com/home/item.html?id=3a9c31b3c0e24c74a42277554edc5473
           Layer.fromPortalItem({
             portalItem: {
-              id: "af8a02b5f0bc45049e692f7363c52c57"
+              // Original data, doesn't run full length of street
+              // id: "af8a02b5f0bc45049e692f7363c52c57"
+              // Updated data, about 6700 points
+              id: "cf659adf45244443854ff540bc41bfb0"
             }
           }).then(function addLayer(layer) {
             window.uwbLayer = layer
@@ -200,7 +203,7 @@ require([
       var speedUp = 3
       function uwbFly() {
         if ( uwbPosition < uwbPointIndexes.length - 1 ) {
-          console.log('uwbPosition...', uwbPosition)
+          // console.log('uwbPosition...', uwbPosition)
           var uwbCamera = lastSlideCamera.clone()
           var anchors = uwbFeatures[uwbPointIndexes[uwbPosition]].attributes.anchor_list
           // console.log('uwb anchors', anchors)
@@ -326,7 +329,7 @@ require([
       var p2 = webMercatorUtils.geographicToWebMercator(new Point(path[pos+1]))
       var dist = geometryEngine.distance(p1, p2, 'meters')
       runningDistance += dist
-      if ( runningDistance > 1 ) {
+      if ( runningDistance > 0.5 ) {
         vertexIndexes.push(pos)
         runningDistance = 0
       }
