@@ -32,6 +32,9 @@
     img.logo {
       width: 100%;
     }
+    table {
+      width: 100%;
+    }
   </style>
 
 </head>
@@ -54,6 +57,32 @@
     <div id="slide-timing">
       <input type="range" id="slide-duration" min="500" max="15000" step="100" />
       <label for="slide-duration" id="duration-label">...</label>
+    </div>
+    <div id="coordinate-display">
+      <table>
+        <thead>
+          <tr>
+            <td></td>
+            <td>LAT</td>
+            <td>LON</td>
+            <td>ALT</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>UWB</td>
+            <td id="uwb-lat">-</td>
+            <td id="uwb-lon">-</td>
+            <td id="uwb-alt">-</td>
+          </tr>
+          <tr>
+            <td>GPS</td>
+            <td id="gps-lat">-</td>
+            <td id="gps-lon">-</td>
+            <td id="gps-alt">-</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 

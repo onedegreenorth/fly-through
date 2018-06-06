@@ -9,12 +9,14 @@ require([
   "esri/layers/FeatureLayer",
   "esri/geometry/support/webMercatorUtils",
   "esri/geometry/geometryEngine",
+  "esri/request",
+  "esri/layers/CSVLayer",
   
   "humatics/anchors",
   "humatics/position"
 ], function(
   SceneView, WebScene, Point, Polyline, Camera, id, Layer, FeatureLayer,
-  webMercatorUtils, geometryEngine,
+  webMercatorUtils, geometryEngine, esriRequest, CSVLayer,
   anchors, position
 ) {
 
@@ -53,6 +55,33 @@ require([
   var uwbPosition = 0
   var lastSlideCamera = null
   var uwbPointIndexes
+
+  var coordGpsLat = document.getElementById('gps-lat')
+  var coordGpsLon = document.getElementById('gps-lon')
+  var coordGpsAlt = document.getElementById('gps-alt')
+  var coordUwbLat = document.getElementById('uwb-lat')
+  var coordUwbLon = document.getElementById('uwb-lon')
+  var coordUwbAlt = document.getElementById('uwb-alt')
+
+  window.gpsData = null
+  window.gpsIndexMultiplier = null
+  esriRequest('data/GPS.csv', {
+    responseType: 'text'
+  }).then(
+    function(response) {
+      var rows = response.data.split('\n')
+      var header = rows.shift().split(',')
+      // console.log('header', header)
+      var numericRows = rows.map(function(row) {
+        return row.split(',').map(function(val) {
+          return parseFloat(val)
+        })
+      })
+      // console.log('numericRows', numericRows)
+      numericRows.unshift(header)
+      window.gpsData = numericRows
+    }
+  )
   
   window.layerCount = 0
   window.status = 'play'
@@ -179,7 +208,9 @@ require([
             b = b.attributes.uwb_timestamp
             return a - b
           })
-          console.log('sorted', uwbFeatures)
+          gpsIndexMultiplier = gpsData.length / uwbFeatures.length
+          // console.log('sorted', uwbFeatures)
+          // console.log('lengths', gpsData.length, uwbFeatures.length, 'gps multiplier', gpsIndexMultiplier)
 
           // Make a line out of the points.
           var lineGraphic = position.addLine(scene, uwbFeatures)
@@ -204,7 +235,7 @@ require([
       function uwbFly() {
         if ( uwbPosition < uwbPointIndexes.length - 1 ) {
           // console.log('uwbPosition...', uwbPosition)
-          var uwbCamera = lastSlideCamera.clone()
+          // var uwbCamera = lastSlideCamera.clone()
           var anchors = uwbFeatures[uwbPointIndexes[uwbPosition]].attributes.anchor_list
           // console.log('uwb anchors', anchors)
           anchors = anchors.split(',').map(function(name) {
@@ -222,10 +253,15 @@ require([
 
           // Move the blue dot.
           var uwbGeometry = uwbFeatures[uwbPointIndexes[uwbPosition]].geometry
-          uwbCamera.position.longitude = uwbGeometry.longitude
-          uwbCamera.position.latitude = uwbGeometry.latitude
+          // uwbCamera.position.longitude = uwbGeometry.longitude
+          // uwbCamera.position.latitude = uwbGeometry.latitude
           // console.log('next lat lon', uwbCamera.position.latitude, uwbCamera.position.longitude)
           position.moveTo(uwbGeometry)
+
+          // Update the UWB coordinates.
+          coordUwbAlt.innerHTML = uwbGeometry.z.toFixed(2)
+          coordUwbLat.innerHTML = uwbGeometry.latitude.toFixed(5)
+          coordUwbLon.innerHTML = uwbGeometry.longitude.toFixed(5)
 
           // Figure out when to next move the blue dot.
           var uwbCurrent = uwbFeatures[uwbPointIndexes[uwbPosition]].attributes.uwb_timestamp
@@ -242,11 +278,17 @@ require([
 
           
           // Move the camera every 1/10th as often as the point.
+          // Also update the GPS coordinates.
           if ( uwbPosition % 10 === 0 && (uwbPosition + 10 < uwbPointIndexes.length) ) {
             var viewDestination = uwbFeatures[uwbPointIndexes[uwbPosition + 10]].attributes.uwb_timestamp
             var viewDuration = (viewDestination - uwbCurrent) / speedUp
             var viewGeometry = uwbFeatures[uwbPointIndexes[uwbPosition + 10]]
             // console.log('viewDuration', viewDuration)
+            var gpsIndex = Math.floor(uwbPosition * gpsIndexMultiplier)
+            coordGpsLat.innerHTML = gpsData[gpsIndex][2].toFixed(5)
+            coordGpsLon.innerHTML = gpsData[gpsIndex][3].toFixed(5)
+            coordGpsAlt.innerHTML = gpsData[gpsIndex][4].toFixed(2)
+
             window.gotoResult = view
               .goTo(viewGeometry, { 
                 // duration: viewDuration,
@@ -264,6 +306,10 @@ require([
       }
       // console.log('calling uwb fly...')
       uwbFly()
+      // Show GPS coordinates for first point, which is row index 1
+      coordGpsLat.innerHTML = gpsData[1][2].toFixed(2)
+      coordGpsLon.innerHTML = gpsData[1][3].toFixed(5)
+      coordGpsAlt.innerHTML = gpsData[1][4].toFixed(5)
       return
     }
     if ( slideIndex + 1 === 1 || slideIndex + 1 === 17 ) {
